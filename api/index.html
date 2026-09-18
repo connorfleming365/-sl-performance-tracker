@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>S&L Performance Tracker</title>
+<style>
+  :root{
+    --pitch:#16332A; --pitch-dark:#0E241D; --chalk:#F3F0E6; --gold:#C39A3B;
+    --draw:#8A7B57; --ink:#1B1F1C; --line:rgba(243,240,230,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--pitch-dark);color:var(--chalk);font-family:'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--gold);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+  .masthead h1{font-family:'Arial Narrow',Helvetica,sans-serif;font-weight:800;font-size:34px;letter-spacing:0.5px;margin:0;text-transform:uppercase;}
+  .masthead .season{color:var(--gold);font-size:15px;font-weight:600;}
+  .masthead a.logbtn{color:var(--ink);background:var(--gold);padding:8px 14px;border-radius:2px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tab-btn{flex:1;padding:12px 10px;background:var(--pitch);border:1px solid var(--line);color:var(--chalk);font-size:15px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.3px;border-radius:2px;}
+  .tab-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+  .scoreboard{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:10px;}
+  .stat{padding:16px 6px;text-align:center;border-right:1px solid var(--line);}
+  .stat:last-child{border-right:none;}
+  .stat .num{font-size:26px;font-weight:800;font-family:'Arial Narrow',sans-serif;}
+  .stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#B9C4BC;margin-top:3px;}
+  .stat.diffpos .num{color:#7FBF8F;} .stat.diffneg .num{color:#D08674;}
+  .form-guide{display:flex;gap:6px;align-items:center;margin-bottom:26px;font-size:12px;color:#B9C4BC;flex-wrap:wrap;}
+  .form-guide .chip{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--ink);}
+  .chip.W{background:#7FBF8F;} .chip.D{background:var(--draw);} .chip.L{background:#D08674;}
+  section{margin-bottom:30px;}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px;font-weight:700;}
+  .match{border:1px solid var(--line);border-radius:3px;margin-bottom:8px;}
+  .match-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;}
+  .match-head .res{display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-weight:800;font-size:12px;color:var(--ink);margin-right:10px;}
+  .res.W{background:#7FBF8F;} .res.D{background:var(--draw);} .res.L{background:#D08674;}
+  .match-title{font-weight:700;font-size:14px;}
+  .match-sub{font-size:11px;color:#8FA096;margin-top:2px;}
+  .match-score{font-family:'Arial Narrow',sans-serif;font-size:20px;font-weight:800;}
+  .match-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line);}
+  .match-body.open{display:block;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  th{text-align:left;color:#8FA096;font-size:10px;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line);}
+  td{padding:6px 4px;border-bottom:1px solid rgba(243,240,230,0.06);}
+  .empty{color:#8FA096;font-size:13px;padding:14px 0;}
+  .lb-controls{margin-bottom:10px;}
+  input{width:100%;padding:8px 9px;background:var(--pitch);border:1px solid var(--line);color:var(--chalk);font-size:14px;border-radius:2px;font-family:inherit;}
+  .pom-tag{color:var(--gold);font-weight:700;}
+  .card-badge{display:inline-block;width:12px;height:16px;border-radius:2px;vertical-align:middle;margin-left:4px;}
+  .card-badge.yellow{background:#E0C349;} .card-badge.red{background:#C24C3C;}
+  svg{width:100%;height:150px;display:block;}
+  .chart-wrap{border:1px solid var(--line);border-radius:3px;padding:14px;}
+  .axis-lbl{font-size:9px;fill:#8FA096;}
+  .loading{color:#8FA096;font-size:13px;}
+  @media(max-width:640px){.scoreboard{grid-template-columns:repeat(4,1fr);} .stat{border-bottom:1px solid var(--line);}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>S&amp;L Performance Tracker</h1>
+    <div><span class="season">2026/27 Season</span> &nbsp; <a class="logbtn" href="/log.html">Log a Match</a></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-team="1st-xv">1st XV</button>
+    <button class="tab-btn" data-team="dev-xv">Development XV</button>
+  </div>
+
+  <div id="loadingMsg" class="loading">Loading season data...</div>
+
+  <div class="scoreboard" id="scoreboard"></div>
+  <div class="form-guide" id="formGuide"></div>
+  <div class="form-guide" id="pomLeader" style="margin-top:-4px;"></div>
+
+  <section>
+    <h2>Match Log</h2>
+    <div id="matchLog"></div>
+  </section>
+
+  <section>
+    <h2 id="lbHeading">Player Appearances — 1st XV</h2>
+    <div class="lb-controls"><input type="text" id="playerSearch" placeholder="Filter players..."></div>
+    <table id="lbTable">
+      <thead><tr><th>Player</th><th>Apps</th><th>Points</th><th>Tries</th><th>Cards</th><th>POM</th></tr></thead>
+      <tbody id="lbBody"></tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Points Differential — Match by Match</h2>
+    <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 700 150"></svg></div>
+  </section>
+
+  <section>
+    <h2>Overall Player Tracker — Both Teams</h2>
+    <div class="lb-controls"><input type="text" id="overallSearch" placeholder="Filter players..."></div>
+    <table id="overallTable">
+      <thead><tr><th>Player</th><th>Matches Played</th><th>Points</th><th>Cards</th><th>POM</th></tr></thead>
+      <tbody id="overallBody"></tbody>
+    </table>
+  </section>
+</div>
+
+<script>
+let currentTeam = '1st-xv';
+let matches = { '1st-xv': [], 'dev-xv': [] };
+
+function result(m){ if(m.scoreFor > m.scoreAgainst) return 'W'; if(m.scoreFor < m.scoreAgainst) return 'L'; return 'D'; }
+
+function renderScoreboard(){
+  const list = matches[currentTeam];
+  const played = list.length;
+  const won = list.filter(m=>result(m)==='W').length;
+  const drawn = list.filter(m=>result(m)==='D').length;
+  const lost = list.filter(m=>result(m)==='L').length;
+  const pf = list.reduce((s,m)=>s+Number(m.scoreFor),0);
+  const pa = list.reduce((s,m)=>s+Number(m.scoreAgainst),0);
+  const diff = pf-pa;
+  const stats = [['P',played],['W',won],['D',drawn],['L',lost],['PF',pf],['PA',pa],['DIFF',(diff>0?'+':'')+diff]];
+  document.getElementById('scoreboard').innerHTML = stats.map(([lbl,num])=>{
+    let cls='stat'; if(lbl==='DIFF') cls += diff>0?' diffpos':(diff<0?' diffneg':'');
+    return `<div class="${cls}"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`;
+  }).join('');
+  const sorted = [...list].sort((a,b)=>a.date.localeCompare(b.date));
+  const last5 = sorted.slice(-5);
+  document.getElementById('formGuide').innerHTML = last5.length===0
+    ? '<span>No matches logged yet this season.</span>'
+    : 'Form: ' + last5.map(m=>`<span class="chip ${result(m)}">${result(m)}</span>`).join('');
+}
+
+function renderMatchLog(){
+  const list = [...matches[currentTeam]].sort((a,b)=>b.date.localeCompare(a.date));
+  const container = document.getElementById('matchLog');
+  if(list.length===0){ container.innerHTML = '<div class="empty">No matches logged for this team yet.</div>'; return; }
+  container.innerHTML = list.map(m=>{
+    const r = result(m);
+    const dateStr = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+    const rows = m.playerRatings.length ? m.playerRatings.map(p=>
+      `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.points||0}</td><td>${p.tries}</td></tr>`
+    ).join('') : '<tr><td colspan="3" class="empty">No player entries logged.</td></tr>';
+    const pomPlayer = m.playerRatings.find(p=>p.pom);
+    return `<div class="match">
+      <div class="match-head" onclick="toggleMatch('${m.id}')">
+        <div>
+          <span class="res ${r}">${r}</span>
+          <span class="match-title">${m.opponent}</span>
+          <div class="match-sub">${dateStr} &middot; ${m.venue} &middot; ${m.comp}${pomPlayer?` &middot; <span class="pom-tag">POM ${pomPlayer.player}</span>`:''}</div>
+        </div>
+        <div class="match-score">${m.scoreFor} - ${m.scoreAgainst}</div>
+      </div>
+      <div class="match-body" id="body-${m.id}">
+        ${m.notes ? `<div style="font-size:13px;color:#B9C4BC;margin-top:10px;">${m.notes}</div>` : ''}
+        <table><thead><tr><th>Player</th><th>Points</th><th>Tries</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleMatch(id){ document.getElementById('body-'+id).classList.toggle('open'); }
+
+function renderLeaderboard(filter=''){
+  document.getElementById('lbHeading').textContent = 'Player Appearances — ' + (currentTeam==='1st-xv' ? '1st XV' : 'Development XV');
+  const stats = {};
+  matches[currentTeam].forEach(m=>m.playerRatings.forEach(p=>{
+    if(!stats[p.player]) stats[p.player] = {apps:0,points:0,tries:0,cards:0,pom:0};
+    stats[p.player].apps++; stats[p.player].points += (p.points||0); stats[p.player].tries += p.tries;
+    if(p.card && p.card!=='none') stats[p.player].cards++;
+    if(p.pom) stats[p.player].pom++;
+  }));
+  let rows = Object.entries(stats).map(([name,s])=>({name, ...s}));
+  rows.sort((a,b)=> b.pom-a.pom || b.points-a.points || b.apps-a.apps);
+  if(filter) rows = rows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase()));
+  const body = document.getElementById('lbBody');
+  body.innerHTML = rows.length===0 ? '<tr><td colspan="6" class="empty">No player data yet.</td></tr>' :
+    rows.map(r=>`<tr><td>${r.name}</td><td>${r.apps}</td><td>${r.points}</td><td>${r.tries}</td><td>${r.cards}</td><td>${r.pom}</td></tr>`).join('');
+}
+
+function renderOverallTracker(filter=''){
+  const stats = {};
+  ['1st-xv','dev-xv'].forEach(team=>matches[team].forEach(m=>m.playerRatings.forEach(p=>{
+    if(!stats[p.player]) stats[p.player] = {apps:0,points:0,cards:0,pom:0};
+    stats[p.player].apps++; stats[p.player].points += (p.points||0);
+    if(p.card && p.card!=='none') stats[p.player].cards++;
+    if(p.pom) stats[p.player].pom++;
+  })));
+  let rows = Object.entries(stats).map(([name,s])=>({name, ...s}));
+  rows.sort((a,b)=> b.points-a.points || b.pom-a.pom || b.apps-a.apps);
+  if(filter) rows = rows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase()));
+  const body = document.getElementById('overallBody');
+  body.innerHTML = rows.length===0 ? '<tr><td colspan="5" class="empty">No player data logged for either team yet.</td></tr>' :
+    rows.map(r=>`<tr><td>${r.name}</td><td>${r.apps}</td><td>${r.points}</td><td>${r.cards}</td><td>${r.pom}</td></tr>`).join('');
+}
+
+function renderChart(){
+  const list = [...matches[currentTeam]].sort((a,b)=>a.date.localeCompare(b.date));
+  const svg = document.getElementById('trendChart');
+  const w=700,h=150,pad=30;
+  if(list.length<1){ svg.innerHTML = `<text x="20" y="75" fill="#8FA096" font-size="13">No matches logged yet.</text>`; return; }
+  const diffs = list.map(m=>m.scoreFor - m.scoreAgainst);
+  const maxAbs = Math.max(10, ...diffs.map(d=>Math.abs(d)));
+  const yZero = h/2;
+  const stepX = list.length>1 ? (w-2*pad)/(list.length-1) : 0;
+  const scaleY = (h/2-15)/maxAbs;
+  const points = diffs.map((d,i)=>[pad+i*stepX, yZero-d*scaleY]);
+  const pathD = points.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const dots = points.map((p,i)=>{
+    const col = diffs[i]>0?'#7FBF8F':(diffs[i]<0?'#D08674':'#8A7B57');
+    return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${col}"><title>${list[i].opponent}: ${diffs[i]>0?'+':''}${diffs[i]}</title></circle>`;
+  }).join('');
+  svg.innerHTML = `<line x1="${pad}" y1="${yZero}" x2="${w-pad}" y2="${yZero}" stroke="rgba(243,240,230,0.2)" stroke-width="1"/><path d="${pathD}" fill="none" stroke="#C39A3B" stroke-width="2"/>${dots}<text class="axis-lbl" x="${pad}" y="${yZero-4}">0</text>`;
+}
+
+function renderPomLeader(){
+  const counts = {};
+  matches[currentTeam].forEach(m=>m.playerRatings.forEach(p=>{ if(p.pom) counts[p.player] = (counts[p.player]||0)+1; }));
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const el = document.getElementById('pomLeader');
+  if(entries.length===0){ el.innerHTML=''; return; }
+  const top = entries[0][1];
+  const leaders = entries.filter(([,c])=>c===top).map(([n])=>n);
+  el.innerHTML = `<span class="pom-tag">Player of the Season:</span> ${leaders.join(', ')} (${top} MOTM${top>1?'s':''})`;
+}
+
+function renderAll(){
+  renderScoreboard(); renderMatchLog();
+  renderLeaderboard(document.getElementById('playerSearch').value);
+  renderChart(); renderPomLeader();
+  renderOverallTracker(document.getElementById('overallSearch').value);
+}
+
+async function loadData(){
+  try{
+    const res = await fetch('/api/matches');
+    const data = await res.json();
+    matches['1st-xv'] = data['1st-xv'] || [];
+    matches['dev-xv'] = data['dev-xv'] || [];
+  }catch(e){
+    console.error('Failed to load data', e);
+  }
+  document.getElementById('loadingMsg').style.display = 'none';
+  renderAll();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTeam = btn.dataset.team;
+    renderAll();
+  });
+});
+document.getElementById('playerSearch').addEventListener('input', (e)=>renderLeaderboard(e.target.value));
+document.getElementById('overallSearch').addEventListener('input', (e)=>renderOverallTracker(e.target.value));
+
+loadData();
+</script>
+</body>
+</html>

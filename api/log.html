@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>S&L Tracker — Log a Match</title>
+<style>
+  :root{
+    --pitch:#16332A; --pitch-dark:#0E241D; --chalk:#F3F0E6; --gold:#C39A3B;
+    --draw:#8A7B57; --ink:#1B1F1C; --line:rgba(243,240,230,0.14);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--pitch-dark);color:var(--chalk);font-family:'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+  .masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--gold);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
+  .masthead h1{font-family:'Arial Narrow',Helvetica,sans-serif;font-weight:800;font-size:30px;letter-spacing:0.5px;margin:0;text-transform:uppercase;}
+  .masthead a{color:var(--gold);font-size:13px;text-decoration:none;}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tab-btn{flex:1;padding:12px 10px;background:var(--pitch);border:1px solid var(--line);color:var(--chalk);font-size:15px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.3px;border-radius:2px;}
+  .tab-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
+  section{margin-bottom:30px;}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px;font-weight:700;}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  label{font-size:11px;color:#B9C4BC;display:block;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.4px;}
+  input,select,textarea{width:100%;padding:8px 9px;background:var(--pitch);border:1px solid var(--line);color:var(--chalk);font-size:14px;border-radius:2px;margin-bottom:12px;font-family:inherit;}
+  input:focus,select:focus,textarea:focus{outline:1px solid var(--gold);}
+  .field{margin-bottom:0;}
+  .rating-row{display:grid;grid-template-columns:1.8fr 55px 50px 75px 34px 26px;gap:6px;align-items:center;margin-bottom:8px;}
+  .rating-row input,.rating-row select{margin-bottom:0;}
+  .rating-row .rm{background:none;border:none;color:#D08674;cursor:pointer;font-size:16px;font-weight:800;}
+  .small-lbl{font-size:10px;color:#8FA096;text-align:center;text-transform:uppercase;}
+  button.primary{background:var(--gold);color:var(--ink);border:none;padding:11px 18px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;font-size:13px;cursor:pointer;border-radius:2px;}
+  button.ghost{background:none;border:1px solid var(--line);color:var(--chalk);padding:8px 14px;cursor:pointer;border-radius:2px;font-size:12px;text-transform:uppercase;}
+  button.link{background:none;border:none;color:#B9C4BC;cursor:pointer;text-decoration:underline;font-size:12px;padding:0;}
+  .match{border:1px solid var(--line);border-radius:3px;margin-bottom:8px;}
+  .match-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;}
+  .match-head .res{display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-weight:800;font-size:12px;color:var(--ink);margin-right:10px;}
+  .res.W{background:#7FBF8F;} .res.D{background:var(--draw);} .res.L{background:#D08674;}
+  .match-title{font-weight:700;font-size:14px;}
+  .match-sub{font-size:11px;color:#8FA096;margin-top:2px;}
+  .match-score{font-family:'Arial Narrow',sans-serif;font-size:20px;font-weight:800;}
+  .match-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line);}
+  .match-body.open{display:block;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
+  th{text-align:left;color:#8FA096;font-size:10px;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line);}
+  td{padding:6px 4px;border-bottom:1px solid rgba(243,240,230,0.06);}
+  .match-actions{margin-top:10px;display:flex;gap:10px;}
+  .empty{color:#8FA096;font-size:13px;padding:14px 0;}
+  .pom-tag{color:var(--gold);font-weight:700;}
+  .card-badge{display:inline-block;width:12px;height:16px;border-radius:2px;vertical-align:middle;margin-left:4px;}
+  .card-badge.yellow{background:#E0C349;} .card-badge.red{background:#C24C3C;}
+  .passcode-bar{background:var(--pitch);border:1px solid var(--line);border-radius:3px;padding:12px 14px;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .passcode-bar input{margin-bottom:0;max-width:200px;}
+  #saveStatus{font-size:12px;color:#8FA096;}
+  @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr;} .rating-row{grid-template-columns:1.6fr 1fr 1fr 1fr 30px 26px;font-size:12px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="masthead">
+    <h1>Log a Match</h1>
+    <a href="/index.html">&larr; Back to public dashboard</a>
+  </div>
+
+  <div class="passcode-bar">
+    <label style="margin:0;">Passcode</label>
+    <input type="password" id="passcode" placeholder="Required to save/edit/delete" style="max-width:200px;">
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-team="1st-xv">1st XV</button>
+    <button class="tab-btn" data-team="dev-xv">Development XV</button>
+  </div>
+
+  <section>
+    <h2>Log a Match</h2>
+    <div class="grid3">
+      <div class="field"><label>Date</label><input type="date" id="mDate"></div>
+      <div class="field"><label>Opponent</label><input type="text" id="mOpponent" placeholder="e.g. Kettering RFC"></div>
+      <div class="field"><label>Venue</label><select id="mVenue"><option value="Home">Home</option><option value="Away">Away</option></select></div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Competition</label><select id="mComp"><option>League</option><option>Cup</option><option>Friendly</option></select></div>
+      <div class="field"><label>Score For</label><input type="number" id="mFor" min="0" placeholder="0"></div>
+      <div class="field"><label>Score Against</label><input type="number" id="mAgainst" min="0" placeholder="0"></div>
+    </div>
+    <label>Match Notes (optional)</label>
+    <textarea id="mNotes" rows="2" placeholder="Conditions, key moments, selection notes..."></textarea>
+
+    <h2 style="margin-top:22px;">Player Contributions</h2>
+    <div class="rating-row" style="margin-bottom:4px;">
+      <div class="small-lbl" style="text-align:left;">Player</div>
+      <div class="small-lbl">Points</div>
+      <div class="small-lbl">Tries</div>
+      <div class="small-lbl">Card</div>
+      <div class="small-lbl">POM</div>
+      <div></div>
+    </div>
+    <div id="playerRows"></div>
+    <button class="link" id="addPlayerRow">+ Add player</button>
+    <div style="margin-top:16px;">
+      <button class="primary" id="saveMatch">Save Match</button>
+      <span id="saveStatus"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Match Log</h2>
+    <div id="matchLog"></div>
+  </section>
+</div>
+
+<script>
+const ROSTER = ["Kieran Manson","Louis Trimble","Lee Bell","Mikey Meade","Dan Martin","Todd Anderson",
+"Haydn Miller","Connor Jenkinson","Ethan Cook","Rhys Cook","Milo Chisholm","Dylan Chigome",
+"Haiden Cunnington","James McCallum","Stephen Davidson","Ewan Martin","Ellis Brown","Harrison Pullen",
+"Brad Adams","Henry Crewe","Jay Manson","Kai Manson","Grant Cook","Andy Findlay","Martin Drummond",
+"Harvey Palmer-Naylor","Josh Aston","Josh Sawford","Ryan Hammett","Callum McGill","Rory Hames",
+"JJ Nightingale","Jordan Branston","Dave Jacklin","Sol Petty","Noah Rogers","Liam Feely",
+"Dale Borthwick","Sean Martin","Keegan Bima","Owen Phoenix","Kyran Phoenix","Harley Phoenix",
+"Jack Riley","Nathan Hand","Josh Ruddick","Charlie Prentice","Jordan Tinto","Michael Sanni",
+"Alden Marshall","Jack Sayers"].sort();
+
+let currentTeam = '1st-xv';
+let matches = { '1st-xv': [], 'dev-xv': [] };
+let editingId = null;
+
+function uid(){ return 'm'+Date.now()+Math.random().toString(16).slice(2,8); }
+function result(m){ if(m.scoreFor > m.scoreAgainst) return 'W'; if(m.scoreFor < m.scoreAgainst) return 'L'; return 'D'; }
+
+async function loadData(){
+  try{
+    const res = await fetch('/api/matches');
+    const data = await res.json();
+    matches['1st-xv'] = data['1st-xv'] || [];
+    matches['dev-xv'] = data['dev-xv'] || [];
+  }catch(e){ console.error(e); }
+}
+
+async function persist(){
+  const passcode = document.getElementById('passcode').value;
+  const res = await fetch('/api/matches', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ passcode, data: matches })
+  });
+  if(res.status === 401){
+    document.getElementById('saveStatus').textContent = 'Wrong passcode.';
+    return false;
+  }
+  if(!res.ok){
+    let msg = 'Save failed — try again.';
+    try{ const body = await res.json(); if(body && body.detail) msg = 'Save failed: ' + body.detail; }catch(e){}
+    document.getElementById('saveStatus').textContent = msg;
+    return false;
+  }
+  return true;
+}
+
+function playerRowHTML(name='', points=0, tries=0, card='none', pom=false){
+  const options = ROSTER.map(p=>`<option value="${p}" ${p===name?'selected':''}>${p}</option>`).join('');
+  return `<div class="rating-row">
+    <select class="pr-name"><option value="">Select player</option>${options}</select>
+    <input type="number" class="pr-points" min="0" value="${points}">
+    <input type="number" class="pr-tries" min="0" value="${tries}">
+    <select class="pr-card">
+      <option value="none" ${card==='none'?'selected':''}>None</option>
+      <option value="yellow" ${card==='yellow'?'selected':''}>Yellow</option>
+      <option value="red" ${card==='red'?'selected':''}>Red</option>
+    </select>
+    <input type="checkbox" class="pr-pom" ${pom?'checked':''} style="margin:0;width:18px;height:18px;">
+    <button class="rm" onclick="this.closest('.rating-row').remove()">&times;</button>
+  </div>`;
+}
+function addPlayerRow(name,points,tries,card,pom){
+  document.getElementById('playerRows').insertAdjacentHTML('beforeend', playerRowHTML(name,points,tries,card,pom));
+}
+
+function resetForm(){
+  document.getElementById('mDate').value='';
+  document.getElementById('mOpponent').value='';
+  document.getElementById('mVenue').value='Home';
+  document.getElementById('mComp').value='League';
+  document.getElementById('mFor').value='';
+  document.getElementById('mAgainst').value='';
+  document.getElementById('mNotes').value='';
+  document.getElementById('playerRows').innerHTML='';
+  addPlayerRow();
+  editingId = null;
+  document.getElementById('saveMatch').textContent='Save Match';
+}
+
+function collectForm(){
+  const date = document.getElementById('mDate').value;
+  const opponent = document.getElementById('mOpponent').value.trim();
+  const venue = document.getElementById('mVenue').value;
+  const comp = document.getElementById('mComp').value;
+  const scoreFor = Number(document.getElementById('mFor').value||0);
+  const scoreAgainst = Number(document.getElementById('mAgainst').value||0);
+  const notes = document.getElementById('mNotes').value.trim();
+  const rows = [...document.querySelectorAll('#playerRows .rating-row')];
+  let playerRatings = rows.map(r=>({
+    player: r.querySelector('.pr-name').value,
+    points: Number(r.querySelector('.pr-points').value||0),
+    tries: Number(r.querySelector('.pr-tries').value||0),
+    card: r.querySelector('.pr-card').value,
+    pom: r.querySelector('.pr-pom').checked
+  })).filter(p=>p.player);
+  if(playerRatings.length && !playerRatings.some(p=>p.pom)){
+    const scorers = playerRatings.filter(p=>p.points>0);
+    if(scorers.length){
+      const top = scorers.reduce((best,p)=>{
+        if(p.points>best.points) return p;
+        if(p.points===best.points && p.tries>best.tries) return p;
+        return best;
+      });
+      playerRatings = playerRatings.map(p=>p===top?{...p,pom:true}:p);
+    }
+  }
+  return {date,opponent,venue,comp,scoreFor,scoreAgainst,notes,playerRatings};
+}
+
+async function saveMatch(){
+  if(!document.getElementById('passcode').value){
+    document.getElementById('saveStatus').textContent = 'Enter the passcode first.';
+    return;
+  }
+  const data = collectForm();
+  if(!data.date || !data.opponent){
+    document.getElementById('saveStatus').textContent = 'Add a date and opponent first.';
+    return;
+  }
+  if(editingId){
+    const idx = matches[currentTeam].findIndex(m=>m.id===editingId);
+    if(idx>-1) matches[currentTeam][idx] = {...data, id:editingId};
+  } else {
+    matches[currentTeam].push({...data, id:uid()});
+  }
+  document.getElementById('saveStatus').textContent = 'Saving...';
+  const ok = await persist();
+  if(ok){
+    document.getElementById('saveStatus').textContent = 'Saved.';
+    setTimeout(()=>document.getElementById('saveStatus').textContent='',1800);
+    resetForm();
+    renderAll();
+  }
+}
+
+function editMatch(id){
+  const m = matches[currentTeam].find(x=>x.id===id);
+  if(!m) return;
+  document.getElementById('mDate').value=m.date;
+  document.getElementById('mOpponent').value=m.opponent;
+  document.getElementById('mVenue').value=m.venue;
+  document.getElementById('mComp').value=m.comp;
+  document.getElementById('mFor').value=m.scoreFor;
+  document.getElementById('mAgainst').value=m.scoreAgainst;
+  document.getElementById('mNotes').value=m.notes||'';
+  document.getElementById('playerRows').innerHTML='';
+  if(m.playerRatings.length===0) addPlayerRow();
+  m.playerRatings.forEach(p=>addPlayerRow(p.player,p.points,p.tries,p.card,p.pom));
+  editingId = id;
+  document.getElementById('saveMatch').textContent='Update Match';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+async function deleteMatch(id){
+  if(!document.getElementById('passcode').value){
+    document.getElementById('saveStatus').textContent = 'Enter the passcode first.';
+    return;
+  }
+  if(!confirm('Delete this match?')) return;
+  matches[currentTeam] = matches[currentTeam].filter(m=>m.id!==id);
+  const ok = await persist();
+  if(ok) renderAll();
+}
+
+function renderMatchLog(){
+  const list = [...matches[currentTeam]].sort((a,b)=>b.date.localeCompare(a.date));
+  const container = document.getElementById('matchLog');
+  if(list.length===0){ container.innerHTML = '<div class="empty">No matches logged for this team yet.</div>'; return; }
+  container.innerHTML = list.map(m=>{
+    const r = result(m);
+    const dateStr = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+    const ratingsRows = m.playerRatings.length ? m.playerRatings.map(p=>
+      `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.points||0}</td><td>${p.tries}</td></tr>`
+    ).join('') : '<tr><td colspan="3" class="empty">No player entries logged.</td></tr>';
+    const pomPlayer = m.playerRatings.find(p=>p.pom);
+    return `<div class="match">
+      <div class="match-head" onclick="toggleMatch('${m.id}')">
+        <div>
+          <span class="res ${r}">${r}</span>
+          <span class="match-title">${m.opponent}</span>
+          <div class="match-sub">${dateStr} &middot; ${m.venue} &middot; ${m.comp}${pomPlayer?` &middot; <span class="pom-tag">POM ${pomPlayer.player}</span>`:''}</div>
+        </div>
+        <div class="match-score">${m.scoreFor} - ${m.scoreAgainst}</div>
+      </div>
+      <div class="match-body" id="body-${m.id}">
+        ${m.notes ? `<div style="font-size:13px;color:#B9C4BC;margin-top:10px;">${m.notes}</div>` : ''}
+        <table><thead><tr><th>Player</th><th>Points</th><th>Tries</th></tr></thead><tbody>${ratingsRows}</tbody></table>
+        <div class="match-actions">
+          <button class="ghost" onclick="editMatch('${m.id}')">Edit</button>
+          <button class="ghost" onclick="deleteMatch('${m.id}')">Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleMatch(id){ document.getElementById('body-'+id).classList.toggle('open'); }
+
+function renderAll(){
+  renderMatchLog();
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTeam = btn.dataset.team;
+    resetForm();
+    renderAll();
+  });
+});
+document.getElementById('addPlayerRow').addEventListener('click', ()=>addPlayerRow());
+document.getElementById('saveMatch').addEventListener('click', saveMatch);
+
+(async function init(){
+  await loadData();
+  resetForm();
+  renderAll();
+})();
+</script>
+</body>
+</html>
