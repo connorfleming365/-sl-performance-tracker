@@ -3,55 +3,131 @@
 <head>
 <meta charset="UTF-8">
 <title>S&L Performance Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --pitch:#16332A; --pitch-dark:#0E241D; --chalk:#F3F0E6; --gold:#C39A3B;
-    --draw:#8A7B57; --ink:#1B1F1C; --line:rgba(243,240,230,0.14);
+    /* S&L Corby Design System — tokens */
+    --color-pitch: #143024;
+    --color-pitch-dark: #0A1B14;
+    --color-pitch-mid: #1E4A3A;
+    --color-chalk: #F5F1E6;
+    --color-chalk-dim: #B9C4BC;
+    --color-gold: #D4A73C;
+    --color-gold-dim: #A9843A;
+    --color-win: #6FBF8C;
+    --color-loss: #C24C3C;
+    --color-draw: #A08B5C;
+    --color-yellow-card: #E0C349;
+    --line: rgba(245,241,230,0.13);
+    --font-display: 'Oswald', 'Arial Narrow', Helvetica, sans-serif;
+    --font-body: 'Barlow', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --radius-sm: 3px;
+    --radius-md: 6px;
+    --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-8: 32px;
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--pitch-dark);color:var(--chalk);font-family:'Segoe UI',Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased;}
-  .wrap{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
-  .masthead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid var(--gold);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px;}
-  .masthead h1{font-family:'Arial Narrow',Helvetica,sans-serif;font-weight:800;font-size:34px;letter-spacing:0.5px;margin:0;text-transform:uppercase;}
-  .masthead .season{color:var(--gold);font-size:15px;font-weight:600;}
-  .masthead a.logbtn{color:var(--ink);background:var(--gold);padding:8px 14px;border-radius:2px;text-decoration:none;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;}
-  .tabs{display:flex;gap:8px;margin-bottom:18px;}
-  .tab-btn{flex:1;padding:12px 10px;background:var(--pitch);border:1px solid var(--line);color:var(--chalk);font-size:15px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.3px;border-radius:2px;}
-  .tab-btn.active{background:var(--gold);color:var(--ink);border-color:var(--gold);}
-  .scoreboard{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--line);border-radius:3px;overflow:hidden;margin-bottom:10px;}
-  .stat{padding:16px 6px;text-align:center;border-right:1px solid var(--line);}
+  body{
+    margin:0;
+    background:var(--color-pitch-dark);
+    color:var(--color-chalk);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1000px;margin:0 auto;padding:var(--space-8) var(--space-5) 60px;}
+
+  .masthead{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:3px solid var(--color-gold);
+    padding-bottom:var(--space-4);margin-bottom:var(--space-6);flex-wrap:wrap;gap:var(--space-3);
+  }
+  .masthead h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:36px;
+    letter-spacing:0.5px;
+    margin:0;
+    text-transform:uppercase;
+  }
+  .masthead .season{color:var(--color-gold);font-size:14px;font-weight:600;letter-spacing:0.3px;}
+  .masthead a.logbtn{
+    color:var(--color-pitch-dark);background:var(--color-gold);padding:9px 16px;border-radius:var(--radius-sm);
+    text-decoration:none;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;
+    font-family:var(--font-display);
+  }
+
+  .tabs{display:flex;gap:var(--space-2);margin-bottom:var(--space-5);}
+  .tab-btn{
+    flex:1;padding:13px 10px;background:var(--color-pitch);border:1px solid var(--line);color:var(--color-chalk);
+    font-family:var(--font-display);font-size:15px;font-weight:600;cursor:pointer;
+    text-transform:uppercase;letter-spacing:0.4px;border-radius:var(--radius-sm);transition:background .15s;
+  }
+  .tab-btn.active{background:var(--color-gold);color:var(--color-pitch-dark);border-color:var(--color-gold);}
+
+  .scoreboard{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden;margin-bottom:var(--space-3);
+  }
+  .stat{padding:var(--space-4) var(--space-1);text-align:center;border-right:1px solid var(--line);}
   .stat:last-child{border-right:none;}
-  .stat .num{font-size:26px;font-weight:800;font-family:'Arial Narrow',sans-serif;}
-  .stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:#B9C4BC;margin-top:3px;}
-  .stat.diffpos .num{color:#7FBF8F;} .stat.diffneg .num{color:#D08674;}
-  .form-guide{display:flex;gap:6px;align-items:center;margin-bottom:26px;font-size:12px;color:#B9C4BC;flex-wrap:wrap;}
-  .form-guide .chip{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--ink);}
-  .chip.W{background:#7FBF8F;} .chip.D{background:var(--draw);} .chip.L{background:#D08674;}
-  section{margin-bottom:30px;}
-  h2{font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:14px;font-weight:700;}
-  .match{border:1px solid var(--line);border-radius:3px;margin-bottom:8px;}
-  .match-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;}
-  .match-head .res{display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-weight:800;font-size:12px;color:var(--ink);margin-right:10px;}
-  .res.W{background:#7FBF8F;} .res.D{background:var(--draw);} .res.L{background:#D08674;}
-  .match-title{font-weight:700;font-size:14px;}
-  .match-sub{font-size:11px;color:#8FA096;margin-top:2px;}
-  .match-score{font-family:'Arial Narrow',sans-serif;font-size:20px;font-weight:800;}
-  .match-body{display:none;padding:0 14px 14px;border-top:1px solid var(--line);}
+  .stat .num{font-size:27px;font-weight:700;font-family:var(--font-display);}
+  .stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--color-chalk-dim);margin-top:3px;}
+  .stat.diffpos .num{color:var(--color-win);} .stat.diffneg .num{color:var(--color-loss);}
+
+  .form-guide{display:flex;gap:6px;align-items:center;margin-bottom:var(--space-6);font-size:12px;color:var(--color-chalk-dim);flex-wrap:wrap;}
+  .form-guide .chip{
+    width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:12px;color:var(--color-pitch-dark);
+  }
+  .chip.W{background:var(--color-win);} .chip.D{background:var(--color-draw);} .chip.L{background:var(--color-loss);}
+
+  section{margin-bottom:var(--space-8);}
+  h2{
+    font-family:var(--font-display);
+    font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--color-gold);
+    border-bottom:1px solid var(--line);padding-bottom:var(--space-2);margin-bottom:var(--space-4);font-weight:600;
+  }
+
+  .match{border:1px solid var(--line);border-radius:var(--radius-md);margin-bottom:var(--space-2);}
+  .match-head{display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) var(--space-4);cursor:pointer;}
+  .match-head .res{
+    display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;
+    font-weight:700;font-size:12px;color:var(--color-pitch-dark);margin-right:var(--space-2);
+  }
+  .res.W{background:var(--color-win);} .res.D{background:var(--color-draw);} .res.L{background:var(--color-loss);}
+  .match-title{font-weight:600;font-size:14px;}
+  .team-tag{
+    display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
+    color:var(--color-pitch-dark);background:var(--color-chalk-dim);border-radius:2px;padding:1px 6px;margin-left:6px;
+    vertical-align:middle;
+  }
+  .match-sub{font-size:11px;color:var(--color-chalk-dim);margin-top:2px;}
+  .match-score{font-family:var(--font-display);font-size:20px;font-weight:700;}
+  .match-body{display:none;padding:0 var(--space-4) var(--space-4);border-top:1px solid var(--line);}
   .match-body.open{display:block;}
-  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px;}
-  th{text-align:left;color:#8FA096;font-size:10px;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line);}
-  td{padding:6px 4px;border-bottom:1px solid rgba(243,240,230,0.06);}
-  .empty{color:#8FA096;font-size:13px;padding:14px 0;}
-  .lb-controls{margin-bottom:10px;}
-  input{width:100%;padding:8px 9px;background:var(--pitch);border:1px solid var(--line);color:var(--chalk);font-size:14px;border-radius:2px;font-family:inherit;}
-  .pom-tag{color:var(--gold);font-weight:700;}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:var(--space-3);}
+  th{text-align:left;color:var(--color-chalk-dim);font-size:10px;text-transform:uppercase;padding:6px 4px;border-bottom:1px solid var(--line);letter-spacing:0.4px;}
+  td{padding:7px 4px;border-bottom:1px solid rgba(245,241,230,0.06);}
+  .empty{color:var(--color-chalk-dim);font-size:13px;padding:var(--space-4) 0;}
+  .lb-controls{margin-bottom:var(--space-3);}
+  input{
+    width:100%;padding:9px 10px;background:var(--color-pitch);border:1px solid var(--line);color:var(--color-chalk);
+    font-size:14px;border-radius:var(--radius-sm);font-family:var(--font-body);
+  }
+  .pom-tag{color:var(--color-gold);font-weight:700;}
   .card-badge{display:inline-block;width:12px;height:16px;border-radius:2px;vertical-align:middle;margin-left:4px;}
-  .card-badge.yellow{background:#E0C349;} .card-badge.red{background:#C24C3C;}
+  .card-badge.yellow{background:var(--color-yellow-card);} .card-badge.red{background:var(--color-loss);}
   svg{width:100%;height:150px;display:block;}
-  .chart-wrap{border:1px solid var(--line);border-radius:3px;padding:14px;}
-  .axis-lbl{font-size:9px;fill:#8FA096;}
-  .loading{color:#8FA096;font-size:13px;}
-  @media(max-width:640px){.scoreboard{grid-template-columns:repeat(4,1fr);} .stat{border-bottom:1px solid var(--line);}}
+  .chart-wrap{border:1px solid var(--line);border-radius:var(--radius-md);padding:var(--space-4);}
+  .axis-lbl{font-size:9px;fill:var(--color-chalk-dim);}
+  .loading{color:var(--color-chalk-dim);font-size:13px;}
+  @media(max-width:640px){
+    .scoreboard{grid-template-columns:repeat(4,1fr);}
+    .stat{border-bottom:1px solid var(--line);}
+    .masthead h1{font-size:28px;}
+  }
 </style>
 </head>
 <body>
@@ -62,7 +138,8 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-team="1st-xv">1st XV</button>
+    <button class="tab-btn active" data-team="overall">Overall</button>
+    <button class="tab-btn" data-team="1st-xv">1st XV</button>
     <button class="tab-btn" data-team="dev-xv">Development XV</button>
   </div>
 
@@ -78,7 +155,7 @@
   </section>
 
   <section>
-    <h2 id="lbHeading">Player Appearances — 1st XV</h2>
+    <h2 id="lbHeading">Player Appearances</h2>
     <div class="lb-controls"><input type="text" id="playerSearch" placeholder="Filter players..."></div>
     <table id="lbTable">
       <thead><tr><th>Player</th><th>Apps</th><th>Points</th><th>Tries</th><th>Cards</th><th>POM</th></tr></thead>
@@ -90,25 +167,28 @@
     <h2>Points Differential — Match by Match</h2>
     <div class="chart-wrap"><svg id="trendChart" viewBox="0 0 700 150"></svg></div>
   </section>
-
-  <section>
-    <h2>Overall Player Tracker — Both Teams</h2>
-    <div class="lb-controls"><input type="text" id="overallSearch" placeholder="Filter players..."></div>
-    <table id="overallTable">
-      <thead><tr><th>Player</th><th>Matches Played</th><th>Points</th><th>Cards</th><th>POM</th></tr></thead>
-      <tbody id="overallBody"></tbody>
-    </table>
-  </section>
 </div>
 
 <script>
-let currentTeam = '1st-xv';
+let currentTeam = 'overall';
 let matches = { '1st-xv': [], 'dev-xv': [] };
+
+const TEAM_LABEL = { '1st-xv': '1st XV', 'dev-xv': 'Dev XV' };
 
 function result(m){ if(m.scoreFor > m.scoreAgainst) return 'W'; if(m.scoreFor < m.scoreAgainst) return 'L'; return 'D'; }
 
+function getMatches(){
+  if(currentTeam === 'overall'){
+    return [
+      ...matches['1st-xv'].map(m => ({...m, _team:'1st-xv'})),
+      ...matches['dev-xv'].map(m => ({...m, _team:'dev-xv'}))
+    ];
+  }
+  return matches[currentTeam].map(m => ({...m, _team: currentTeam}));
+}
+
 function renderScoreboard(){
-  const list = matches[currentTeam];
+  const list = getMatches();
   const played = list.length;
   const won = list.filter(m=>result(m)==='W').length;
   const drawn = list.filter(m=>result(m)==='D').length;
@@ -129,9 +209,9 @@ function renderScoreboard(){
 }
 
 function renderMatchLog(){
-  const list = [...matches[currentTeam]].sort((a,b)=>b.date.localeCompare(a.date));
+  const list = [...getMatches()].sort((a,b)=>b.date.localeCompare(a.date));
   const container = document.getElementById('matchLog');
-  if(list.length===0){ container.innerHTML = '<div class="empty">No matches logged for this team yet.</div>'; return; }
+  if(list.length===0){ container.innerHTML = '<div class="empty">No matches logged yet.</div>'; return; }
   container.innerHTML = list.map(m=>{
     const r = result(m);
     const dateStr = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
@@ -139,17 +219,18 @@ function renderMatchLog(){
       `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.points||0}</td><td>${p.tries}</td></tr>`
     ).join('') : '<tr><td colspan="3" class="empty">No player entries logged.</td></tr>';
     const pomPlayer = m.playerRatings.find(p=>p.pom);
+    const teamTag = currentTeam === 'overall' ? `<span class="team-tag">${TEAM_LABEL[m._team]}</span>` : '';
     return `<div class="match">
       <div class="match-head" onclick="toggleMatch('${m.id}')">
         <div>
           <span class="res ${r}">${r}</span>
-          <span class="match-title">${m.opponent}</span>
+          <span class="match-title">${m.opponent}</span>${teamTag}
           <div class="match-sub">${dateStr} &middot; ${m.venue} &middot; ${m.comp}${pomPlayer?` &middot; <span class="pom-tag">POM ${pomPlayer.player}</span>`:''}</div>
         </div>
         <div class="match-score">${m.scoreFor} - ${m.scoreAgainst}</div>
       </div>
       <div class="match-body" id="body-${m.id}">
-        ${m.notes ? `<div style="font-size:13px;color:#B9C4BC;margin-top:10px;">${m.notes}</div>` : ''}
+        ${m.notes ? `<div style="font-size:13px;color:var(--color-chalk-dim);margin-top:10px;">${m.notes}</div>` : ''}
         <table><thead><tr><th>Player</th><th>Points</th><th>Tries</th></tr></thead><tbody>${rows}</tbody></table>
       </div>
     </div>`;
@@ -158,9 +239,11 @@ function renderMatchLog(){
 function toggleMatch(id){ document.getElementById('body-'+id).classList.toggle('open'); }
 
 function renderLeaderboard(filter=''){
-  document.getElementById('lbHeading').textContent = 'Player Appearances — ' + (currentTeam==='1st-xv' ? '1st XV' : 'Development XV');
+  const heading = currentTeam === 'overall' ? 'Player Appearances — Overall'
+    : 'Player Appearances — ' + TEAM_LABEL[currentTeam];
+  document.getElementById('lbHeading').textContent = heading;
   const stats = {};
-  matches[currentTeam].forEach(m=>m.playerRatings.forEach(p=>{
+  getMatches().forEach(m=>m.playerRatings.forEach(p=>{
     if(!stats[p.player]) stats[p.player] = {apps:0,points:0,tries:0,cards:0,pom:0};
     stats[p.player].apps++; stats[p.player].points += (p.points||0); stats[p.player].tries += p.tries;
     if(p.card && p.card!=='none') stats[p.player].cards++;
@@ -174,24 +257,8 @@ function renderLeaderboard(filter=''){
     rows.map(r=>`<tr><td>${r.name}</td><td>${r.apps}</td><td>${r.points}</td><td>${r.tries}</td><td>${r.cards}</td><td>${r.pom}</td></tr>`).join('');
 }
 
-function renderOverallTracker(filter=''){
-  const stats = {};
-  ['1st-xv','dev-xv'].forEach(team=>matches[team].forEach(m=>m.playerRatings.forEach(p=>{
-    if(!stats[p.player]) stats[p.player] = {apps:0,points:0,cards:0,pom:0};
-    stats[p.player].apps++; stats[p.player].points += (p.points||0);
-    if(p.card && p.card!=='none') stats[p.player].cards++;
-    if(p.pom) stats[p.player].pom++;
-  })));
-  let rows = Object.entries(stats).map(([name,s])=>({name, ...s}));
-  rows.sort((a,b)=> b.points-a.points || b.pom-a.pom || b.apps-a.apps);
-  if(filter) rows = rows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase()));
-  const body = document.getElementById('overallBody');
-  body.innerHTML = rows.length===0 ? '<tr><td colspan="5" class="empty">No player data logged for either team yet.</td></tr>' :
-    rows.map(r=>`<tr><td>${r.name}</td><td>${r.apps}</td><td>${r.points}</td><td>${r.cards}</td><td>${r.pom}</td></tr>`).join('');
-}
-
 function renderChart(){
-  const list = [...matches[currentTeam]].sort((a,b)=>a.date.localeCompare(b.date));
+  const list = [...getMatches()].sort((a,b)=>a.date.localeCompare(b.date));
   const svg = document.getElementById('trendChart');
   const w=700,h=150,pad=30;
   if(list.length<1){ svg.innerHTML = `<text x="20" y="75" fill="#8FA096" font-size="13">No matches logged yet.</text>`; return; }
@@ -203,28 +270,28 @@ function renderChart(){
   const points = diffs.map((d,i)=>[pad+i*stepX, yZero-d*scaleY]);
   const pathD = points.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
   const dots = points.map((p,i)=>{
-    const col = diffs[i]>0?'#7FBF8F':(diffs[i]<0?'#D08674':'#8A7B57');
+    const col = diffs[i]>0?'#6FBF8C':(diffs[i]<0?'#C24C3C':'#A08B5C');
     return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="4" fill="${col}"><title>${list[i].opponent}: ${diffs[i]>0?'+':''}${diffs[i]}</title></circle>`;
   }).join('');
-  svg.innerHTML = `<line x1="${pad}" y1="${yZero}" x2="${w-pad}" y2="${yZero}" stroke="rgba(243,240,230,0.2)" stroke-width="1"/><path d="${pathD}" fill="none" stroke="#C39A3B" stroke-width="2"/>${dots}<text class="axis-lbl" x="${pad}" y="${yZero-4}">0</text>`;
+  svg.innerHTML = `<line x1="${pad}" y1="${yZero}" x2="${w-pad}" y2="${yZero}" stroke="rgba(245,241,230,0.2)" stroke-width="1"/><path d="${pathD}" fill="none" stroke="#D4A73C" stroke-width="2"/>${dots}<text class="axis-lbl" x="${pad}" y="${yZero-4}">0</text>`;
 }
 
 function renderPomLeader(){
   const counts = {};
-  matches[currentTeam].forEach(m=>m.playerRatings.forEach(p=>{ if(p.pom) counts[p.player] = (counts[p.player]||0)+1; }));
+  getMatches().forEach(m=>m.playerRatings.forEach(p=>{ if(p.pom) counts[p.player] = (counts[p.player]||0)+1; }));
   const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
   const el = document.getElementById('pomLeader');
   if(entries.length===0){ el.innerHTML=''; return; }
   const top = entries[0][1];
   const leaders = entries.filter(([,c])=>c===top).map(([n])=>n);
-  el.innerHTML = `<span class="pom-tag">Player of the Season:</span> ${leaders.join(', ')} (${top} MOTM${top>1?'s':''})`;
+  const label = currentTeam === 'overall' ? 'Player of the Season' : 'Player of the Season';
+  el.innerHTML = `<span class="pom-tag">${label}:</span> ${leaders.join(', ')} (${top} MOTM${top>1?'s':''})`;
 }
 
 function renderAll(){
   renderScoreboard(); renderMatchLog();
   renderLeaderboard(document.getElementById('playerSearch').value);
   renderChart(); renderPomLeader();
-  renderOverallTracker(document.getElementById('overallSearch').value);
 }
 
 async function loadData(){
@@ -249,7 +316,6 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
   });
 });
 document.getElementById('playerSearch').addEventListener('input', (e)=>renderLeaderboard(e.target.value));
-document.getElementById('overallSearch').addEventListener('input', (e)=>renderOverallTracker(e.target.value));
 
 loadData();
 </script>
