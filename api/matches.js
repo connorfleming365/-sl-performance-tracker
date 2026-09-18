@@ -1,4 +1,4 @@
-const { put, list } = require('@vercel/blob');
+const { put, get } = require('@vercel/blob');
 
 const PASSCODE = 'blackwave';
 const PATHNAME = 'sl-tracker/season.json';
@@ -6,12 +6,12 @@ const EMPTY = { '1st-xv': [], 'dev-xv': [] };
 
 async function readData() {
   try {
-    const { blobs } = await list({ prefix: PATHNAME });
-    const match = blobs.find(b => b.pathname === PATHNAME);
-    if (!match) return EMPTY;
-    const res = await fetch(match.url);
-    if (!res.ok) return EMPTY;
-    const parsed = await res.json();
+    const result = await get(PATHNAME, { access: 'private' });
+    if (!result || result.statusCode !== 200) return EMPTY;
+    const chunks = [];
+    for await (const chunk of result.stream) chunks.push(chunk);
+    const text = Buffer.concat(chunks).toString('utf-8');
+    const parsed = JSON.parse(text);
     return { '1st-xv': parsed['1st-xv'] || [], 'dev-xv': parsed['dev-xv'] || [] };
   } catch (e) {
     return EMPTY;
@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     };
     try {
       await put(PATHNAME, JSON.stringify(safe), {
-        access: 'public',
+        access: 'private',
         addRandomSuffix: false,
         allowOverwrite: true,
         contentType: 'application/json'
