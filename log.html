@@ -403,11 +403,19 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
 });
 document.getElementById('saveMatch').addEventListener('click', saveMatch);
 
-document.getElementById('addNewPlayerBtn').addEventListener('click', ()=>{
+document.getElementById('addNewPlayerBtn').addEventListener('click', async ()=>{
   const input = document.getElementById('newPlayerName');
   const name = input.value.trim();
   if(!name) return;
+  if(!document.getElementById('passcode').value){
+    document.getElementById('saveStatus').textContent = 'Enter the passcode first.';
+    return;
+  }
   addToRosterIfNew(name);
+  document.getElementById('saveStatus').textContent = 'Saving new player...';
+  const ok = await persist();
+  document.getElementById('saveStatus').textContent = ok ? 'Player added.' : document.getElementById('saveStatus').textContent;
+  if(ok) setTimeout(()=>document.getElementById('saveStatus').textContent='',1800);
   input.value = '';
 });
 
