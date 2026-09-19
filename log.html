@@ -49,10 +49,11 @@
   }
   input:focus,select:focus,textarea:focus{outline:1px solid var(--color-gold);}
   .field{margin-bottom:0;}
-  .rating-row{display:grid;grid-template-columns:32px 1.8fr 55px 50px 75px 34px;gap:6px;align-items:center;margin-bottom:var(--space-2);}
-  .rating-row input,.rating-row select{margin-bottom:0;}
+  .rating-row{display:grid;grid-template-columns:26px 1.5fr 40px 40px 40px 50px 68px 30px;gap:5px;align-items:center;margin-bottom:var(--space-2);}
+  .rating-row input,.rating-row select{margin-bottom:0;padding:9px 6px;}
   .rating-row .num{color:var(--color-gold);font-family:var(--font-display);font-weight:700;font-size:14px;text-align:center;}
-  .small-lbl{font-size:10px;color:var(--color-chalk-dim);text-align:center;text-transform:uppercase;}
+  .rating-row .pr-points{background:var(--color-ink);color:var(--color-gold);font-weight:700;text-align:center;border-color:var(--line);}
+  .small-lbl{font-size:9px;color:var(--color-chalk-dim);text-align:center;text-transform:uppercase;}
   button.primary{
     background:var(--color-gold);color:var(--color-ink);border:none;padding:12px 18px;font-weight:700;
     text-transform:uppercase;letter-spacing:0.4px;font-size:13px;cursor:pointer;border-radius:var(--radius-sm);
@@ -82,7 +83,7 @@
   #saveStatus{font-size:12px;color:var(--color-chalk-dim);}
   .squad-actions{display:flex;gap:var(--space-3);align-items:center;flex-wrap:wrap;margin-bottom:var(--space-4);}
   .squad-actions input{max-width:220px;margin-bottom:0;}
-  @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr;} .rating-row{grid-template-columns:24px 1.5fr 1fr 1fr 1fr 26px;font-size:12px;} .masthead h1{font-size:20px;} .masthead .crest{height:44px;}}
+  @media(max-width:640px){.grid2,.grid3{grid-template-columns:1fr;} .rating-row{grid-template-columns:20px 1.3fr 1fr 1fr 1fr 1fr 1.4fr 24px;font-size:11px;} .masthead h1{font-size:20px;} .masthead .crest{height:44px;}}
 </style>
 </head>
 <body>
@@ -129,8 +130,10 @@
     <div class="rating-row" style="margin-bottom:4px;">
       <div class="small-lbl">#</div>
       <div class="small-lbl" style="text-align:left;">Player</div>
-      <div class="small-lbl">Points</div>
       <div class="small-lbl">Tries</div>
+      <div class="small-lbl">Con</div>
+      <div class="small-lbl">PK</div>
+      <div class="small-lbl">Pts</div>
       <div class="small-lbl">Card</div>
       <div class="small-lbl">POM</div>
     </div>
@@ -183,8 +186,10 @@ function buildSquadTable(){
     html += `<div class="rating-row" data-num="${n}">
       <div class="num">${n}</div>
       <select class="pr-name"><option value="">—</option></select>
-      <input type="number" class="pr-points" min="0" value="0">
       <input type="number" class="pr-tries" min="0" value="0">
+      <input type="number" class="pr-con" min="0" value="0">
+      <input type="number" class="pr-pk" min="0" value="0">
+      <input type="number" class="pr-points" min="0" value="0" readonly tabindex="-1">
       <select class="pr-card">
         <option value="none">None</option>
         <option value="yellow">Yellow</option>
@@ -195,6 +200,16 @@ function buildSquadTable(){
   }
   container.innerHTML = html;
   renderRosterOptions();
+  container.querySelectorAll('.pr-tries, .pr-con, .pr-pk').forEach(el=>{
+    el.addEventListener('input', ()=>recalcRowPoints(el.closest('.rating-row')));
+  });
+}
+
+function recalcRowPoints(row){
+  const tries = Number(row.querySelector('.pr-tries').value||0);
+  const con = Number(row.querySelector('.pr-con').value||0);
+  const pk = Number(row.querySelector('.pr-pk').value||0);
+  row.querySelector('.pr-points').value = (tries*5) + (con*2) + (pk*3);
 }
 
 function addToRosterIfNew(name){
@@ -227,14 +242,16 @@ async function persist(){
   return true;
 }
 
-function setSquadRow(num, name='', points=0, tries=0, card='none', pom=false){
+function setSquadRow(num, name='', tries=0, con=0, pk=0, card='none', pom=false){
   const row = document.querySelector(`#playerRows .rating-row[data-num="${num}"]`);
   if(!row) return;
   row.querySelector('.pr-name').value = name;
-  row.querySelector('.pr-points').value = points;
   row.querySelector('.pr-tries').value = tries;
+  row.querySelector('.pr-con').value = con;
+  row.querySelector('.pr-pk').value = pk;
   row.querySelector('.pr-card').value = card;
   row.querySelector('.pr-pom').checked = pom;
+  recalcRowPoints(row);
 }
 
 function currentRowNames(){
@@ -244,8 +261,10 @@ function currentRowNames(){
 function clearSquadTable(){
   document.querySelectorAll('#playerRows .rating-row').forEach(row=>{
     row.querySelector('.pr-name').value = '';
-    row.querySelector('.pr-points').value = 0;
     row.querySelector('.pr-tries').value = 0;
+    row.querySelector('.pr-con').value = 0;
+    row.querySelector('.pr-pk').value = 0;
+    row.querySelector('.pr-points').value = 0;
     row.querySelector('.pr-card').value = 'none';
     row.querySelector('.pr-pom').checked = false;
   });
@@ -273,13 +292,18 @@ function collectForm(){
   const scoreAgainst = Number(document.getElementById('mAgainst').value||0);
   const notes = document.getElementById('mNotes').value.trim();
   const rows = [...document.querySelectorAll('#playerRows .rating-row')];
-  let playerRatings = rows.map(r=>({
-    player: r.querySelector('.pr-name').value.trim(),
-    points: Number(r.querySelector('.pr-points').value||0),
-    tries: Number(r.querySelector('.pr-tries').value||0),
-    card: r.querySelector('.pr-card').value,
-    pom: r.querySelector('.pr-pom').checked
-  })).filter(p=>p.player);
+  let playerRatings = rows.map(r=>{
+    const tries = Number(r.querySelector('.pr-tries').value||0);
+    const conversions = Number(r.querySelector('.pr-con').value||0);
+    const pk = Number(r.querySelector('.pr-pk').value||0);
+    return {
+      player: r.querySelector('.pr-name').value.trim(),
+      tries, conversions, pk,
+      points: (tries*5) + (conversions*2) + (pk*3),
+      card: r.querySelector('.pr-card').value,
+      pom: r.querySelector('.pr-pom').checked
+    };
+  }).filter(p=>p.player);
   if(playerRatings.length && !playerRatings.some(p=>p.pom)){
     const scorers = playerRatings.filter(p=>p.points>0);
     if(scorers.length){
@@ -338,7 +362,7 @@ function editMatch(id){
   document.getElementById('mAgainst').value=m.scoreAgainst;
   document.getElementById('mNotes').value=m.notes||'';
   clearSquadTable();
-  m.playerRatings.forEach((p,i)=>setSquadRow(i+1, p.player,p.points,p.tries,p.card,p.pom));
+  m.playerRatings.forEach((p,i)=>setSquadRow(i+1, p.player, p.tries||0, p.conversions||0, p.pk||0, p.card, p.pom));
   editingId = id;
   document.getElementById('saveMatch').textContent='Update Match';
   window.scrollTo({top:0,behavior:'smooth'});
@@ -363,8 +387,8 @@ function renderMatchLog(){
     const r = result(m);
     const dateStr = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
     const ratingsRows = m.playerRatings.length ? m.playerRatings.map(p=>
-      `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.points||0}</td><td>${p.tries}</td></tr>`
-    ).join('') : '<tr><td colspan="3" class="empty">No player entries logged.</td></tr>';
+      `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.tries||0}</td><td>${p.conversions||0}</td><td>${p.pk||0}</td><td>${p.points||0}</td></tr>`
+    ).join('') : '<tr><td colspan="5" class="empty">No player entries logged.</td></tr>';
     const pomPlayer = m.playerRatings.find(p=>p.pom);
     return `<div class="match">
       <div class="match-head" onclick="toggleMatch('${m.id}')">
@@ -377,7 +401,7 @@ function renderMatchLog(){
       </div>
       <div class="match-body" id="body-${m.id}">
         ${m.notes ? `<div style="font-size:13px;color:var(--color-chalk-dim);margin-top:10px;">${m.notes}</div>` : ''}
-        <table><thead><tr><th>Player</th><th>Points</th><th>Tries</th></tr></thead><tbody>${ratingsRows}</tbody></table>
+        <table><thead><tr><th>Player</th><th>T</th><th>C</th><th>PK</th><th>Pts</th></tr></thead><tbody>${ratingsRows}</tbody></table>
         <div class="match-actions">
           <button class="ghost" onclick="editMatch('${m.id}')">Edit</button>
           <button class="ghost" onclick="deleteMatch('${m.id}')">Delete</button>

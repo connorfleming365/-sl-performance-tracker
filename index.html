@@ -223,8 +223,8 @@ function renderMatchLog(){
     const r = result(m);
     const dateStr = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
     const rows = m.playerRatings.length ? m.playerRatings.map(p=>
-      `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.points||0}</td><td>${p.tries}</td></tr>`
-    ).join('') : '<tr><td colspan="3" class="empty">No player entries logged.</td></tr>';
+      `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.tries||0}</td><td>${p.conversions||0}</td><td>${p.pk||0}</td><td>${p.points||0}</td></tr>`
+    ).join('') : '<tr><td colspan="5" class="empty">No player entries logged.</td></tr>';
     const pomPlayer = m.playerRatings.find(p=>p.pom);
     const teamTag = currentTeam === 'overall' ? `<span class="team-tag">${TEAM_LABEL[m._team]}</span>` : '';
     return `<div class="match">
@@ -238,7 +238,7 @@ function renderMatchLog(){
       </div>
       <div class="match-body" id="body-${m.id}">
         ${m.notes ? `<div style="font-size:13px;color:var(--color-chalk-dim);margin-top:10px;">${m.notes}</div>` : ''}
-        <table><thead><tr><th>Player</th><th>Points</th><th>Tries</th></tr></thead><tbody>${rows}</tbody></table>
+        <table><thead><tr><th>Player</th><th>T</th><th>C</th><th>PK</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
       </div>
     </div>`;
   }).join('');
