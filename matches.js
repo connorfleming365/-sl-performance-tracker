@@ -1,5 +1,5 @@
 const { put, get } = require('@vercel/blob');
-
+ 
 const PASSCODE = 'blackwave';
 const PATHNAME = 'sl-tracker/season.json';
 
