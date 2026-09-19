@@ -153,7 +153,6 @@
 
   <div class="scoreboard" id="scoreboard"></div>
   <div class="form-guide" id="formGuide"></div>
-  <div class="form-guide" id="pomLeader" style="margin-top:-4px;"></div>
   <div class="form-guide" id="topTries" style="margin-top:-4px;"></div>
   <div class="form-guide" id="topApps" style="margin-top:-4px;"></div>
 
@@ -289,17 +288,6 @@ function renderChart(){
   svg.innerHTML = `<line x1="${pad}" y1="${yZero}" x2="${w-pad}" y2="${yZero}" stroke="rgba(245,241,230,0.15)" stroke-width="1"/><path d="${pathD}" fill="none" stroke="#E9B341" stroke-width="2"/>${dots}<text class="axis-lbl" x="${pad}" y="${yZero-4}">0</text>`;
 }
 
-function renderPomLeader(){
-  const counts = {};
-  getMatches().forEach(m=>m.playerRatings.forEach(p=>{ if(p.pom) counts[p.player] = (counts[p.player]||0)+1; }));
-  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
-  const el = document.getElementById('pomLeader');
-  if(entries.length===0){ el.innerHTML=''; return; }
-  const top = entries[0][1];
-  const leaders = entries.filter(([,c])=>c===top).map(([n])=>n);
-  el.innerHTML = `<span class="pom-tag">Player of the Season:</span> ${leaders.join(', ')} (${top} MOTM${top>1?'s':''})`;
-}
-
 function renderTopStats(){
   const stats = computePlayerStats();
   const entries = Object.entries(stats);
@@ -326,7 +314,7 @@ function renderTopStats(){
 function renderAll(){
   renderScoreboard(); renderMatchLog();
   renderLeaderboard(document.getElementById('playerSearch').value);
-  renderChart(); renderPomLeader(); renderTopStats();
+  renderChart(); renderTopStats();
 }
 
 async function loadData(){
