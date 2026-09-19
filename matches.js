@@ -39,9 +39,9 @@ module.exports = async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method === 'GET') {
-    const data = await readData();
-    return res.status(200).json(data);
+   if (req.method === 'GET') {
+    return res.status(200).json({ TEST_MARKER: 'HELLO_FROM_NEW_CODE', time: Date.now() });
+  }
   }
 
   if (req.method === 'POST') {
