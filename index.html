@@ -154,6 +154,8 @@
   <div class="scoreboard" id="scoreboard"></div>
   <div class="form-guide" id="formGuide"></div>
   <div class="form-guide" id="pomLeader" style="margin-top:-4px;"></div>
+  <div class="form-guide" id="topTries" style="margin-top:-4px;"></div>
+  <div class="form-guide" id="topApps" style="margin-top:-4px;"></div>
 
   <section>
     <h2>Match Log</h2>
@@ -244,10 +246,7 @@ function renderMatchLog(){
 }
 function toggleMatch(id){ document.getElementById('body-'+id).classList.toggle('open'); }
 
-function renderLeaderboard(filter=''){
-  const heading = currentTeam === 'overall' ? 'Player Appearances — Overall'
-    : 'Player Appearances — ' + TEAM_LABEL[currentTeam];
-  document.getElementById('lbHeading').textContent = heading;
+function computePlayerStats(){
   const stats = {};
   getMatches().forEach(m=>m.playerRatings.forEach(p=>{
     if(!stats[p.player]) stats[p.player] = {apps:0,points:0,tries:0,cards:0,pom:0};
@@ -255,6 +254,14 @@ function renderLeaderboard(filter=''){
     if(p.card && p.card!=='none') stats[p.player].cards++;
     if(p.pom) stats[p.player].pom++;
   }));
+  return stats;
+}
+
+function renderLeaderboard(filter=''){
+  const heading = currentTeam === 'overall' ? 'Player Appearances — Overall'
+    : 'Player Appearances — ' + TEAM_LABEL[currentTeam];
+  document.getElementById('lbHeading').textContent = heading;
+  const stats = computePlayerStats();
   let rows = Object.entries(stats).map(([name,s])=>({name, ...s}));
   rows.sort((a,b)=> b.pom-a.pom || b.points-a.points || b.apps-a.apps);
   if(filter) rows = rows.filter(r=>r.name.toLowerCase().includes(filter.toLowerCase()));
@@ -293,10 +300,33 @@ function renderPomLeader(){
   el.innerHTML = `<span class="pom-tag">Player of the Season:</span> ${leaders.join(', ')} (${top} MOTM${top>1?'s':''})`;
 }
 
+function renderTopStats(){
+  const stats = computePlayerStats();
+  const entries = Object.entries(stats);
+
+  const triesEl = document.getElementById('topTries');
+  const tryEntries = entries.filter(([,s])=>s.tries>0).sort((a,b)=>b[1].tries-a[1].tries);
+  if(tryEntries.length===0){ triesEl.innerHTML=''; }
+  else{
+    const top = tryEntries[0][1].tries;
+    const leaders = tryEntries.filter(([,s])=>s.tries===top).map(([n])=>n);
+    triesEl.innerHTML = `<span class="pom-tag">Top Try Scorer:</span> ${leaders.join(', ')} (${top} tr${top>1?'ies':'y'})`;
+  }
+
+  const appsEl = document.getElementById('topApps');
+  const appEntries = entries.filter(([,s])=>s.apps>0).sort((a,b)=>b[1].apps-a[1].apps);
+  if(appEntries.length===0){ appsEl.innerHTML=''; }
+  else{
+    const top = appEntries[0][1].apps;
+    const leaders = appEntries.filter(([,s])=>s.apps===top).map(([n])=>n);
+    appsEl.innerHTML = `<span class="pom-tag">Most Appearances:</span> ${leaders.join(', ')} (${top} app${top>1?'s':''})`;
+  }
+}
+
 function renderAll(){
   renderScoreboard(); renderMatchLog();
   renderLeaderboard(document.getElementById('playerSearch').value);
-  renderChart(); renderPomLeader();
+  renderChart(); renderPomLeader(); renderTopStats();
 }
 
 async function loadData(){
