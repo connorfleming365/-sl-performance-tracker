@@ -13,7 +13,7 @@ const DEFAULT_ROSTER = ["Kieran Manson","Louis Trimble","Lee Bell","Mikey Meade"
 "Jack Riley","Nathan Hand","Josh Ruddick","Charlie Prentice","Jordan Tinto","Michael Sanni",
 "Alden Marshall","Jack Sayers"].sort();
 
-const EMPTY = { '1st-xv': [], 'dev-xv': [], roster: DEFAULT_ROSTER };
+const EMPTY = { '1st-xv': [], 'dev-xv': [], roster: DEFAULT_ROSTER, _version: 'v2' };
 
 async function readData() {
   try {
