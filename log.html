@@ -68,6 +68,11 @@
   .match-head .res{display:inline-block;width:24px;height:24px;border-radius:50%;text-align:center;line-height:24px;font-weight:700;font-size:12px;color:var(--color-ink);margin-right:var(--space-2);}
   .res.W{background:var(--color-gold);} .res.D{background:#8C7B57;} .res.L{background:var(--color-red);}
   .match-title{font-weight:600;font-size:14px;}
+  .team-tag{
+    display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;
+    color:var(--color-ink);background:var(--color-chalk-dim);border-radius:2px;padding:1px 6px;margin-left:4px;
+    vertical-align:middle;
+  }
   .match-sub{font-size:11px;color:var(--color-chalk-dim);margin-top:2px;}
   .match-score{font-family:var(--font-display);font-size:20px;font-weight:700;}
   .match-body{display:none;padding:0 var(--space-4) var(--space-4);border-top:1px solid var(--line);}
@@ -150,19 +155,31 @@
     <h2>Match Log</h2>
     <div id="matchLog"></div>
   </section>
+
+  <section>
+    <h2>Recently Deleted <span style="color:var(--color-chalk-dim);font-weight:400;text-transform:none;letter-spacing:0;">(kept 30 days)</span></h2>
+    <div id="trashLog"></div>
+  </section>
 </div>
 
 <datalist id="rosterOptions"></datalist>
 
 <script>
 const SQUAD_SIZE = 26;
+const TRASH_RETENTION_DAYS = 30;
 let ROSTER = [];
 let currentTeam = '1st-xv';
 let matches = { '1st-xv': [], 'dev-xv': [] };
+let trash = [];
 let editingId = null;
 
 function uid(){ return 'm'+Date.now()+Math.random().toString(16).slice(2,8); }
 function result(m){ if(m.scoreFor > m.scoreAgainst) return 'W'; if(m.scoreFor < m.scoreAgainst) return 'L'; return 'D'; }
+
+function activeTrash(){
+  const cutoff = Date.now() - TRASH_RETENTION_DAYS*24*60*60*1000;
+  return trash.filter(t => new Date(t.deletedAt).getTime() > cutoff);
+}
 
 async function loadData(){
   try{
@@ -171,6 +188,7 @@ async function loadData(){
     matches['1st-xv'] = data['1st-xv'] || [];
     matches['dev-xv'] = data['dev-xv'] || [];
     ROSTER = (data.roster || []).slice().sort();
+    trash = data.trash || [];
   }catch(e){ console.error(e); }
   buildSquadTable();
 }
@@ -225,10 +243,11 @@ function addToRosterIfNew(name){
 
 async function persist(){
   const passcode = document.getElementById('passcode').value;
+  trash = activeTrash();
   const res = await fetch('/api/matches', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ passcode, data: {...matches, roster: ROSTER} })
+    body: JSON.stringify({ passcode, data: {...matches, roster: ROSTER, trash} })
   });
   if(res.status === 401){
     document.getElementById('saveStatus').textContent = 'Wrong passcode.';
@@ -374,10 +393,64 @@ async function deleteMatch(id){
     document.getElementById('saveStatus').textContent = 'Enter the passcode first.';
     return;
   }
-  if(!confirm('Delete this match?')) return;
-  matches[currentTeam] = matches[currentTeam].filter(m=>m.id!==id);
+  if(!confirm('Delete this match? It will be kept in Recently Deleted for 30 days.')) return;
+  const m = matches[currentTeam].find(x=>x.id===id);
+  if(!m) return;
+  matches[currentTeam] = matches[currentTeam].filter(x=>x.id!==id);
+  trash.push({ team: currentTeam, deletedAt: new Date().toISOString(), match: m });
   const ok = await persist();
   if(ok) renderAll();
+}
+
+async function restoreMatch(id){
+  if(!document.getElementById('passcode').value){
+    document.getElementById('saveStatus').textContent = 'Enter the passcode first.';
+    return;
+  }
+  const entry = trash.find(t=>t.match.id===id);
+  if(!entry) return;
+  trash = trash.filter(t=>t.match.id!==id);
+  matches[entry.team].push(entry.match);
+  const ok = await persist();
+  if(ok) renderAll();
+}
+
+async function purgeMatch(id){
+  if(!document.getElementById('passcode').value){
+    document.getElementById('saveStatus').textContent = 'Enter the passcode first.';
+    return;
+  }
+  if(!confirm('Permanently delete this match? This cannot be undone.')) return;
+  trash = trash.filter(t=>t.match.id!==id);
+  const ok = await persist();
+  if(ok) renderAll();
+}
+
+function renderTrash(){
+  const container = document.getElementById('trashLog');
+  const list = activeTrash().sort((a,b)=>b.deletedAt.localeCompare(a.deletedAt));
+  if(list.length===0){ container.innerHTML = '<div class="empty">Nothing in Recently Deleted.</div>'; return; }
+  container.innerHTML = list.map(entry=>{
+    const m = entry.match;
+    const dateStr = m.date ? new Date(m.date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '';
+    const teamLabel = entry.team === '1st-xv' ? '1st XV' : 'Development XV';
+    const deletedStr = new Date(entry.deletedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="match">
+      <div class="match-head" style="cursor:default;">
+        <div>
+          <span class="match-title">${m.opponent}</span> <span class="team-tag">${teamLabel}</span>
+          <div class="match-sub">${dateStr} &middot; ${m.venue} &middot; ${m.comp} &middot; deleted ${deletedStr}</div>
+        </div>
+        <div class="match-score">${m.scoreFor} - ${m.scoreAgainst}</div>
+      </div>
+      <div class="match-body open" style="padding:0 var(--space-4) var(--space-4);">
+        <div class="match-actions" style="margin-top:0;">
+          <button class="ghost" onclick="restoreMatch('${m.id}')">Restore</button>
+          <button class="ghost" onclick="purgeMatch('${m.id}')">Delete Forever</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderMatchLog(){
@@ -415,6 +488,7 @@ function toggleMatch(id){ document.getElementById('body-'+id).classList.toggle('
 
 function renderAll(){
   renderMatchLog();
+  renderTrash();
 }
 
 document.querySelectorAll('.tab-btn').forEach(btn=>{
