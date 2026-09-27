@@ -90,7 +90,7 @@
   .stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--color-chalk-dim);margin-top:6px;}
   .stat.diffpos .num{color:var(--color-gold);} .stat.diffneg .num{color:var(--color-red);}
 
-  .highlight-cards{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-6);}
+  .highlight-cards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-3);margin-bottom:var(--space-6);}
   .highlight-card{
     background:var(--color-ink-mid);border:1px solid var(--line);border-radius:var(--radius-lg);
     padding:20px 22px;box-shadow:0 2px 8px rgba(0,0,0,0.25);
@@ -198,6 +198,7 @@
   <div class="form-guide" id="formGuide"></div>
   <div class="highlight-cards">
     <div class="highlight-card" id="topTries"></div>
+    <div class="highlight-card" id="topPoints"></div>
     <div class="highlight-card" id="topApps"></div>
   </div>
 
@@ -369,6 +370,10 @@ function renderTopStats(){
   const tryEntries = entries.filter(([,s])=>s.tries>0).sort((a,b)=>b[1].tries-a[1].tries);
   const tryGroups = topNGroups(tryEntries, s=>s.tries, 3);
   renderRankedCard(document.getElementById('topTries'), 'Top Try Scorers', tryGroups, 'try', 'tries', 'No tries logged yet.');
+
+  const pointEntries = entries.filter(([,s])=>s.points>0).sort((a,b)=>b[1].points-a[1].points);
+  const pointGroups = topNGroups(pointEntries, s=>s.points, 3);
+  renderRankedCard(document.getElementById('topPoints'), 'Top Point Scorers', pointGroups, 'pt', 'pts', 'No points logged yet.');
 
   const appEntries = entries.filter(([,s])=>s.apps>0).sort((a,b)=>b[1].apps-a[1].apps);
   const appGroups = topNGroups(appEntries, s=>s.apps, 3);
