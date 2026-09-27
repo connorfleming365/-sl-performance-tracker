@@ -95,9 +95,18 @@
     background:var(--color-ink-mid);border:1px solid var(--line);border-radius:var(--radius-lg);
     padding:20px 22px;box-shadow:0 2px 8px rgba(0,0,0,0.25);
   }
-  .highlight-card .hc-label{font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--color-chalk-dim);margin-bottom:6px;}
-  .highlight-card .hc-value{font-family:var(--font-display);font-size:32px;font-weight:700;color:var(--color-gold);line-height:1;}
-  .highlight-card .hc-name{font-size:15px;font-weight:600;margin-top:6px;}
+  .highlight-card .hc-label{font-size:11px;text-transform:uppercase;letter-spacing:0.7px;color:var(--color-chalk-dim);margin-bottom:10px;}
+  .hc-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(245,241,230,0.06);}
+  .hc-row:last-child{border-bottom:none;}
+  .hc-pos{
+    font-family:var(--font-display);font-weight:700;font-size:13px;color:var(--color-ink);
+    background:var(--color-gold);width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .hc-row:nth-child(3) .hc-pos{background:var(--color-gold-light);}
+  .hc-row:nth-child(4) .hc-pos{background:#8C7B57;color:var(--color-chalk);}
+  .hc-rname{flex:1;font-size:14px;font-weight:600;}
+  .hc-rval{font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--color-gold);flex-shrink:0;}
   .highlight-card.empty-card{color:var(--color-chalk-dim);font-size:13px;}
 
   .form-guide{display:flex;gap:8px;align-items:center;margin-bottom:var(--space-6);font-size:13px;color:var(--color-chalk-dim);flex-wrap:wrap;}
@@ -325,33 +334,45 @@ function renderChart(){
   svg.innerHTML = `<line x1="${pad}" y1="${yZero}" x2="${w-pad}" y2="${yZero}" stroke="rgba(245,241,230,0.15)" stroke-width="1"/><path d="${pathD}" fill="none" stroke="#E9B341" stroke-width="2"/>${dots}<text class="axis-lbl" x="${pad}" y="${yZero-4}">0</text>`;
 }
 
+function topNGroups(sortedEntries, valueFn, n){
+  const groups = [];
+  for(const [name, s] of sortedEntries){
+    const v = valueFn(s);
+    const last = groups[groups.length-1];
+    if(last && last.value === v){
+      last.names.push(name);
+    } else {
+      if(groups.length >= n) break;
+      groups.push({ value: v, names: [name] });
+    }
+  }
+  return groups;
+}
+
+function renderRankedCard(el, label, groups, unitSingular, unitPlural, emptyMsg){
+  if(groups.length===0){
+    el.className = 'highlight-card empty-card';
+    el.innerHTML = emptyMsg;
+    return;
+  }
+  el.className = 'highlight-card';
+  const rows = groups.map((g,i)=>
+    `<div class="hc-row"><span class="hc-pos">${i+1}</span><span class="hc-rname">${g.names.join(', ')}</span><span class="hc-rval">${g.value} ${g.value===1?unitSingular:unitPlural}</span></div>`
+  ).join('');
+  el.innerHTML = `<div class="hc-label">${label}</div>${rows}`;
+}
+
 function renderTopStats(){
   const stats = computePlayerStats();
   const entries = Object.entries(stats);
 
-  const triesEl = document.getElementById('topTries');
   const tryEntries = entries.filter(([,s])=>s.tries>0).sort((a,b)=>b[1].tries-a[1].tries);
-  if(tryEntries.length===0){
-    triesEl.className = 'highlight-card empty-card';
-    triesEl.innerHTML = 'No tries logged yet.';
-  } else {
-    triesEl.className = 'highlight-card';
-    const top = tryEntries[0][1].tries;
-    const leaders = tryEntries.filter(([,s])=>s.tries===top).map(([n])=>n);
-    triesEl.innerHTML = `<div class="hc-label">Top Try Scorer</div><div class="hc-value">${top}</div><div class="hc-name">${leaders.join(', ')}</div>`;
-  }
+  const tryGroups = topNGroups(tryEntries, s=>s.tries, 3);
+  renderRankedCard(document.getElementById('topTries'), 'Top Try Scorers', tryGroups, 'try', 'tries', 'No tries logged yet.');
 
-  const appsEl = document.getElementById('topApps');
   const appEntries = entries.filter(([,s])=>s.apps>0).sort((a,b)=>b[1].apps-a[1].apps);
-  if(appEntries.length===0){
-    appsEl.className = 'highlight-card empty-card';
-    appsEl.innerHTML = 'No appearances logged yet.';
-  } else {
-    appsEl.className = 'highlight-card';
-    const top = appEntries[0][1].apps;
-    const leaders = appEntries.filter(([,s])=>s.apps===top).map(([n])=>n);
-    appsEl.innerHTML = `<div class="hc-label">Most Appearances</div><div class="hc-value">${top}</div><div class="hc-name">${leaders.join(', ')}</div>`;
-  }
+  const appGroups = topNGroups(appEntries, s=>s.apps, 3);
+  renderRankedCard(document.getElementById('topApps'), 'Most Appearances', appGroups, 'app', 'apps', 'No appearances logged yet.');
 }
 
 function renderAll(){
