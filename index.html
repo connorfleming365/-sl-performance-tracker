@@ -171,6 +171,9 @@
   .modal-score{font-family:var(--font-display);font-size:52px;font-weight:700;margin:8px 0;line-height:1;}
   .modal-meta{font-size:13px;color:var(--color-chalk-dim);margin-top:4px;}
   .modal-body{padding:24px 30px 30px;}
+  .modal-highlight-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+  .modal-mini-card{padding:14px 16px;}
+  .modal-mini-card .hc-label{margin-bottom:8px;}
   .modal-pom{
     background:rgba(233,179,65,0.10);border:1px solid rgba(233,179,65,0.35);border-radius:var(--radius-md);
     padding:14px 18px;margin-bottom:22px;display:flex;align-items:center;gap:14px;
@@ -329,6 +332,16 @@ function renderMatchLog(){
   }).join('');
 }
 
+function miniMatchCard(label, groups, unitSingular, unitPlural, emptyMsg){
+  if(groups.length===0){
+    return `<div class="highlight-card empty-card modal-mini-card"><div class="hc-label">${label}</div>${emptyMsg}</div>`;
+  }
+  const rows = groups.map((g,i)=>
+    `<div class="hc-row"><span class="hc-pos">${i+1}</span><span class="hc-rname">${g.names.join(', ')}</span><span class="hc-rval">${g.value} ${g.value===1?unitSingular:unitPlural}</span></div>`
+  ).join('');
+  return `<div class="highlight-card modal-mini-card"><div class="hc-label">${label}</div>${rows}</div>`;
+}
+
 function openMatchModal(id){
   const m = matchById[id];
   if(!m) return;
@@ -342,6 +355,15 @@ function openMatchModal(id){
     `<tr><td>${p.player}${p.pom?' <span class="pom-tag">POM</span>':''}${p.card&&p.card!=='none'?` <span class="card-badge ${p.card}" title="${p.card} card"></span>`:''}</td><td>${p.tries||0}</td><td>${p.conversions||0}</td><td>${p.pk||0}</td><td>${p.points||0}</td></tr>`
   ).join('') : '<tr><td colspan="5" class="empty">No player entries logged.</td></tr>';
 
+  const tryItems = m.playerRatings.filter(p=>(p.tries||0)>0).sort((a,b)=>b.tries-a.tries).map(p=>[p.player,p]);
+  const tryGroups = topNGroups(tryItems, s=>s.tries, 3);
+  const pointItems = m.playerRatings.filter(p=>(p.points||0)>0).sort((a,b)=>b.points-a.points).map(p=>[p.player,p]);
+  const pointGroups = topNGroups(pointItems, s=>s.points, 3);
+  const widgetsHTML = `<div class="modal-highlight-cards">
+    ${miniMatchCard('Top Try Scorer', tryGroups, 'try', 'tries', 'No tries this match.')}
+    ${miniMatchCard('Top Points Scorer', pointGroups, 'pt', 'pts', 'No points this match.')}
+  </div>`;
+
   document.getElementById('matchModalContent').innerHTML = `
     <button class="modal-close" onclick="closeMatchModal()" aria-label="Close">&times;</button>
     <div class="modal-header">
@@ -351,6 +373,7 @@ function openMatchModal(id){
       <div class="modal-meta">${dateStr} &middot; ${m.venue} &middot; ${m.comp}${teamLabel?` &middot; ${teamLabel}`:''}</div>
     </div>
     <div class="modal-body">
+      ${widgetsHTML}
       ${pomPlayer ? `<div class="modal-pom"><span class="pom-icon">⭐</span><div><div class="pom-sub">Player of the Match</div><div class="pom-player">${pomPlayer.player}</div></div></div>` : ''}
       <div class="modal-section-label">Scoring</div>
       <table><thead><tr><th>Player</th><th>T</th><th>C</th><th>PK</th><th>Pts</th></tr></thead><tbody>${rows}</tbody></table>
